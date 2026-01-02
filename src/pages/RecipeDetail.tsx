@@ -461,14 +461,19 @@ export function RecipeDetail() {
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border">
         <div className="h-64 bg-gray-100 relative">
-          <img
-            src={
-              recipe.image_url ||
-              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
-            }
-            alt={recipe.title}
-            className="w-full h-full object-cover"
-          />
+          {recipe.image_url ? (
+            <img
+              src={recipe.image_url}
+              alt={recipe.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <span className="text-gray-400 font-medium">
+                No Image Available
+              </span>
+            </div>
+          )}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 pt-12">
             <h1 className="text-3xl font-bold text-white">{recipe.title}</h1>
             <div className="flex items-center gap-4 mt-2 text-white/90">
@@ -477,7 +482,7 @@ export function RecipeDetail() {
               </span>
               {recipe.cooking_time && (
                 <div className="flex items-center gap-1 text-sm bg-black/30 px-2 py-0.5 rounded backdrop-blur-sm">
-                  <Clock className="h-3 w-3" />
+                  <Clock className="h-4 w-4" />
                   <span>{recipe.cooking_time}</span>
                 </div>
               )}

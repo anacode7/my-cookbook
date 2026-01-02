@@ -272,15 +272,16 @@ export function RecipeLibrary() {
               <Card className="h-full hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                 {/* Placeholder Image */}
                 <div className="h-48 bg-orange-100 flex items-center justify-center rounded-t-lg relative overflow-hidden">
-                  <img
-                    src={
-                      recipe.image_url ||
-                      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                    }
-                    alt={recipe.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  {recipe.image_url ? (
+                    <img
+                      src={recipe.image_url}
+                      alt={recipe.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <ChefHat className="h-12 w-12 text-orange-300" />
+                  )}
                   {recipe.cooked && (
                     <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                       Cooked

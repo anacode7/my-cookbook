@@ -151,11 +151,30 @@ function parseSingleRecipe(text: string): ParsedRecipe {
       if (!clean) continue;
 
       const parts = clean.match(/^([\d./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+)?\s+(.+)/);
+      // Regex above expects: [Number/Fraction] [Space] [Unit/Text] [Space] [Name]
+      // It fails on "2¾ oz Salted Butter" because it sees "2¾" as number, "oz" as unit.
+      // It fails on "Cauliflower 1" because number is at end.
+      // It fails on "Nutmeg 0.25" because number is at end.
 
-      if (parts) {
-        let amountStr = parts[1];
+      // Let's try a more robust approach:
+      // 1. Check if line starts with number/fraction
+      const startMatch = clean.match(
+        /^([\d\s./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+)?\s+(.*)/
+      );
 
-        // Convert vulgar fractions to decimals
+      // 2. Check if line ends with number/fraction (e.g. "Cauliflower 1")
+      const endMatch = clean.match(/^(.*)\s+([\d./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+)?$/);
+
+      if (startMatch) {
+        // Case: "2¾ oz Salted Butter"
+        let amountStr = startMatch[1].trim();
+        let unitStr = startMatch[2] || "";
+        let nameStr = startMatch[3];
+
+        // CLEANUP: If unit looks like part of name (e.g. "Salted"), and name is empty? No regex handles that.
+        // BUT: "oz Whole Milk" -> Amount "", Unit "oz"? No.
+
+        // Convert fractions
         amountStr = amountStr
           .replace(/¼/g, ".25")
           .replace(/½/g, ".5")
@@ -163,24 +182,56 @@ function parseSingleRecipe(text: string): ParsedRecipe {
           .replace(/⅓/g, ".33")
           .replace(/⅔/g, ".66")
           .replace(/⅛/g, ".125")
-          .replace(/\?/g, ".5"); // Handle OCR '?' as 0.5
+          .replace(/\?/g, ".5");
 
-        let amountVal = parseFloat(amountStr) || 0;
-
-        // Handle "2.75" or "2 3/4" mixed numbers logic if needed,
-        // currently simple float parse works for "2.75" but "2 3/4" needs more complex logic if not standardized.
-        // Given OCR output "2¾", replacing ¾ with .75 results in "2.75" which parseFloat handles perfectly.
+        // Handle mixed numbers "2 3/4" -> 2.75
+        let amountVal = 0;
+        if (amountStr.includes(" ")) {
+          const nums = amountStr.split(" ").map((n) => parseFloat(n));
+          if (nums.every((n) => !isNaN(n))) {
+            amountVal = nums.reduce((a, b) => a + b, 0);
+          } else {
+            amountVal = parseFloat(amountStr) || 0;
+          }
+        } else {
+          amountVal = parseFloat(amountStr) || 0;
+        }
 
         recipe.ingredients?.push({
           id: crypto.randomUUID(),
           recipe_id: "",
-          name: parts[3].trim(),
+          name: nameStr.trim(),
           amount: amountVal,
-          unit: parts[2] || "",
+          unit: unitStr,
+          order_index: recipe.ingredients.length,
+        });
+      } else if (endMatch) {
+        // Case: "Cauliflower 1" or "Nutmeg 0.25"
+        let nameStr = endMatch[1];
+        let amountStr = endMatch[2];
+        let unitStr = endMatch[3] || "";
+
+        amountStr = amountStr
+          .replace(/¼/g, ".25")
+          .replace(/½/g, ".5")
+          .replace(/¾/g, ".75")
+          .replace(/⅓/g, ".33")
+          .replace(/⅔/g, ".66")
+          .replace(/⅛/g, ".125")
+          .replace(/\?/g, ".5");
+
+        let amountVal = parseFloat(amountStr) || 0;
+
+        recipe.ingredients?.push({
+          id: crypto.randomUUID(),
+          recipe_id: "",
+          name: nameStr.trim(),
+          amount: amountVal,
+          unit: unitStr,
           order_index: recipe.ingredients.length,
         });
       } else {
-        // Fallback for no amount
+        // Fallback: No number found at start or end
         recipe.ingredients?.push({
           id: crypto.randomUUID(),
           recipe_id: "",
