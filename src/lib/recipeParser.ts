@@ -150,10 +150,26 @@ function parseSingleRecipe(text: string): ParsedRecipe {
       // If line is empty after cleaning, skip
       if (!clean) continue;
 
-      const parts = clean.match(/^([\d./?]+)\s*([a-zA-Z]+)?\s+(.+)/);
+      const parts = clean.match(/^([\d./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+)?\s+(.+)/);
 
       if (parts) {
-        let amountVal = parseFloat(parts[1].replace(/\?/, ".5")) || 0;
+        let amountStr = parts[1];
+
+        // Convert vulgar fractions to decimals
+        amountStr = amountStr
+          .replace(/¼/g, ".25")
+          .replace(/½/g, ".5")
+          .replace(/¾/g, ".75")
+          .replace(/⅓/g, ".33")
+          .replace(/⅔/g, ".66")
+          .replace(/⅛/g, ".125")
+          .replace(/\?/g, ".5"); // Handle OCR '?' as 0.5
+
+        let amountVal = parseFloat(amountStr) || 0;
+
+        // Handle "2.75" or "2 3/4" mixed numbers logic if needed,
+        // currently simple float parse works for "2.75" but "2 3/4" needs more complex logic if not standardized.
+        // Given OCR output "2¾", replacing ¾ with .75 results in "2.75" which parseFloat handles perfectly.
 
         recipe.ingredients?.push({
           id: crypto.randomUUID(),

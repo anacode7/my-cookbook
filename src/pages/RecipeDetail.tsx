@@ -464,9 +464,7 @@ export function RecipeDetail() {
           <img
             src={
               recipe.image_url ||
-              `https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-                recipe.title + " food dish professional photography"
-              )}&image_size=landscape_16_9`
+              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80"
             }
             alt={recipe.title}
             className="w-full h-full object-cover"
