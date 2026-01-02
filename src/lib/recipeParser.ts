@@ -134,6 +134,8 @@ function parseSingleRecipe(text: string): ParsedRecipe {
         let url = line.replace(/^(Image:|Photo:)\s*/i, "").trim();
         // Remove backticks and quotes if user pasted markdown code
         url = url.replace(/[`'"]/g, "");
+        // Remove surrounding parens if present (e.g. from markdown link)
+        url = url.replace(/^\((.*)\)$/, "$1");
         recipe.image_url = url;
       } else if (line.startsWith("http://") || line.startsWith("https://")) {
         // Assume bare URL is an image if we don't have one yet

@@ -49,8 +49,9 @@ export function RecipeDetail() {
   }, [id]);
 
   // Check if image URL is valid (basic check)
-  const hasValidImage =
-    recipe?.image_url && recipe.image_url.startsWith("http");
+  // Ensure we trim whitespace and backticks if they somehow persist, although parser should handle it.
+  const cleanImage = recipe?.image_url?.replace(/[`'"]/g, "").trim();
+  const hasValidImage = cleanImage && cleanImage.startsWith("http");
 
   // ... (fetchData remains same, just ensure it resets Edit Form)
   async function fetchData() {
@@ -468,7 +469,7 @@ export function RecipeDetail() {
         <div className="h-64 bg-gray-100 relative group">
           {hasValidImage ? (
             <img
-              src={recipe.image_url}
+              src={cleanImage}
               alt={recipe.title}
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -518,7 +519,7 @@ export function RecipeDetail() {
                       "h-4 w-4",
                       star <= rating
                         ? "fill-yellow-400 text-yellow-400"
-                        : "fill-gray-600 text-gray-600"
+                        : "text-gray-300"
                     )}
                   />
                 ))}
