@@ -89,6 +89,8 @@ export function ImportRecipes() {
             servings: recipe.servings,
             notes: recipe.notes,
             cooked: false,
+            image_url: recipe.image_url || "",
+            cooking_time: recipe.cooking_time || "",
           })
           .select()
           .single();

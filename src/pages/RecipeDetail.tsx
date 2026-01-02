@@ -48,6 +48,10 @@ export function RecipeDetail() {
     if (id) fetchData();
   }, [id]);
 
+  // Check if image URL is valid (basic check)
+  const hasValidImage =
+    recipe?.image_url && recipe.image_url.startsWith("http");
+
   // ... (fetchData remains same, just ensure it resets Edit Form)
   async function fetchData() {
     try {
@@ -461,8 +465,8 @@ export function RecipeDetail() {
 
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border">
-        <div className="h-64 bg-gray-100 relative">
-          {recipe.image_url ? (
+        <div className="h-64 bg-gray-100 relative group">
+          {hasValidImage ? (
             <img
               src={recipe.image_url}
               alt={recipe.title}
@@ -477,32 +481,44 @@ export function RecipeDetail() {
           ) : null}
           <div
             className={`w-full h-full flex items-center justify-center bg-gray-200 fallback ${
-              recipe.image_url ? "hidden" : ""
+              hasValidImage ? "hidden" : ""
             }`}
           >
             <span className="text-gray-400 font-medium">
               No Image Available
             </span>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 pt-12">
-            <h1 className="text-3xl font-bold text-white">{recipe.title}</h1>
-            <div className="flex items-center gap-4 mt-2 text-white/90">
-              <span className="capitalize bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm text-sm">
+
+          {/* Gradient Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-24">
+            <h1 className="text-3xl font-bold text-white shadow-sm">
+              {recipe.title}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-3 mt-3 text-white font-medium">
+              {/* Category Badge */}
+              <span className="capitalize bg-white/20 hover:bg-white/30 transition-colors px-3 py-1 rounded-full backdrop-blur-md text-sm border border-white/10 shadow-sm">
                 {recipe.category}
               </span>
-              {recipe.cooking_time && (
-                <div className="flex items-center gap-1 text-sm bg-black/30 px-2 py-0.5 rounded backdrop-blur-sm">
-                  <Clock className="h-4 w-4" />
+
+              {/* Cooking Time Badge - Explicitly rendering if present */}
+              {recipe.cooking_time ? (
+                <div className="flex items-center gap-1.5 text-sm bg-black/40 hover:bg-black/50 transition-colors px-3 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-sm">
+                  <Clock className="h-4 w-4 text-orange-400" />
                   <span>{recipe.cooking_time}</span>
                 </div>
-              )}
-              <div className="flex items-center">
+              ) : null}
+
+              {/* Rating Stars */}
+              <div className="flex items-center bg-black/40 px-3 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-sm">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
                     className={cn(
-                      "h-4 w-4 fill-current",
-                      star <= rating ? "text-yellow-400" : "text-gray-400"
+                      "h-4 w-4",
+                      star <= rating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-gray-600 text-gray-600"
                     )}
                   />
                 ))}
@@ -584,17 +600,17 @@ export function RecipeDetail() {
                     key={ing.id}
                     className="text-sm flex justify-between border-b border-gray-100 pb-2 last:border-0"
                   >
+                    {/* Left Column: Imperial Amount + Name */}
                     <span>
-                      {scaledAmount > 0 && (
+                      {ing.amount > 0 && (
                         <span className="font-semibold text-gray-600 mr-1">
-                          {scaledAmount.toLocaleString(undefined, {
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                          {ing.unit}
+                          {ing.amount} {ing.unit}
                         </span>
                       )}
                       {ing.name}
                     </span>
+
+                    {/* Right Column: Metric Only */}
                     <div className="text-right">
                       {isMetric ? (
                         <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
