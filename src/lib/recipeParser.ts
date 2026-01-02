@@ -127,6 +127,11 @@ function parseSingleRecipe(text: string): ParsedRecipe {
       } else if (line.match(/^(Image|Photo):/i)) {
         const url = line.replace(/^(Image:|Photo:)\s*/i, "").trim();
         recipe.image_url = url;
+      } else if (line.startsWith("http://") || line.startsWith("https://")) {
+        // Assume bare URL is an image if we don't have one yet
+        if (!recipe.image_url) {
+          recipe.image_url = line.trim();
+        }
       } else if (
         !recipe.title &&
         line.length > 0 &&
@@ -158,21 +163,77 @@ function parseSingleRecipe(text: string): ParsedRecipe {
 
       // Let's try a more robust approach:
       // 1. Check if line starts with number/fraction
+      // Improved regex to capture "fl oz" or two-word units
       const startMatch = clean.match(
-        /^([\d\s./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+)?\s+(.*)/
+        /^([\d\s./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+(?:\s+[a-zA-Z.]+)?)\s+(.*)/
       );
-
+      
       // 2. Check if line ends with number/fraction (e.g. "Cauliflower 1")
-      const endMatch = clean.match(/^(.*)\s+([\d./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+)?$/);
+      const endMatch = clean.match(/^(.*)\s+([\d./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+(?:\s+[a-zA-Z.]+)?)$/);
 
       if (startMatch) {
-        // Case: "2¾ oz Salted Butter"
+        // Case: "2¾ oz Salted Butter" or "14 fl oz Whole Milk"
         let amountStr = startMatch[1].trim();
         let unitStr = startMatch[2] || "";
         let nameStr = startMatch[3];
-
-        // CLEANUP: If unit looks like part of name (e.g. "Salted"), and name is empty? No regex handles that.
-        // BUT: "oz Whole Milk" -> Amount "", Unit "oz"? No.
+        
+        // Refine Unit/Name split:
+        // Regex `[a-zA-Z.]+(?:\s+[a-zA-Z.]+)?` greedily grabs "oz Whole".
+        // We need to check if unitStr contains common unit words.
+        
+        const knownUnits = ["fl oz", "floz", "fl.oz", "oz", "lb", "lbs", "cup", "cups", "tbsp", "tsp", "g", "kg", "ml", "l", "liter", "pint", "quart", "gal"];
+        
+        // Attempt to split unitStr if it has spaces
+        if (unitStr.includes(" ")) {
+            const parts = unitStr.split(" ");
+            // If first part is a unit, but second isn't?
+            // E.g. "oz Whole" -> "oz" is unit, "Whole" is name.
+            
+            // Actually, better strategy:
+            // Match specific known units at start of string after number.
+            // But regex is already executed.
+            
+            // Let's re-parse unitStr + nameStr
+            const combined = unitStr + " " + nameStr;
+            
+            // Try to find the longest matching unit at the start
+            let bestUnit = "";
+            let bestName = combined;
+            
+            // Check for multi-word units first
+            if (combined.toLowerCase().startsWith("fl oz")) {
+                bestUnit = "fl oz";
+                bestName = combined.substring(5).trim();
+            } else if (combined.toLowerCase().startsWith("fl. oz")) {
+                bestUnit = "fl. oz";
+                bestName = combined.substring(6).trim();
+            } else {
+                // Check single word units
+                const firstWord = combined.split(" ")[0];
+                if (knownUnits.includes(firstWord.toLowerCase().replace(".",""))) {
+                    bestUnit = firstWord;
+                    bestName = combined.substring(firstWord.length).trim();
+                } else {
+                     // Maybe it's just a generic unit we don't know, keep original split?
+                     // If original split was "oz Whole", "oz" is known.
+                     const parts = unitStr.split(" ");
+                     if (knownUnits.includes(parts[0].toLowerCase())) {
+                         bestUnit = parts[0];
+                         bestName = combined.substring(parts[0].length).trim();
+                     } else {
+                         // Fallback: use what regex caught as unit, if reasonable length
+                         bestUnit = unitStr;
+                         bestName = nameStr;
+                     }
+                }
+            }
+            unitStr = bestUnit;
+            nameStr = bestName;
+        } else {
+             // Single word unit caught. Check if it's actually part of name?
+             // E.g. "1 Whole Chicken" -> Unit "Whole"?
+             // If not in known units, maybe treated as unit anyway (e.g. "pinch").
+        }
 
         // Convert fractions
         amountStr = amountStr
