@@ -17,6 +17,7 @@ export interface Recipe {
   cooked: boolean
   cooked_date?: string
   notes?: string
+  image_url?: string
   created_at: string
   updated_at: string
   ingredients?: Ingredient[]

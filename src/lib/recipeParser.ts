@@ -124,6 +124,9 @@ function parseSingleRecipe(text: string): ParsedRecipe {
           .replace(/^(Time:|Cooking Time:|###\s*Cooking Time:)\s*/i, "")
           .trim();
         recipe.notes += `Cooking Time: ${timeVal}\n`;
+      } else if (line.startsWith("Image:") || line.startsWith("Photo:")) {
+        const url = line.replace(/^(Image:|Photo:)\s*/i, "").trim();
+        recipe.image_url = url;
       } else if (
         !recipe.title &&
         line.length > 0 &&

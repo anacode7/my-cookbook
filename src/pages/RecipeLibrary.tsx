@@ -273,9 +273,12 @@ export function RecipeLibrary() {
                 {/* Placeholder Image */}
                 <div className="h-48 bg-orange-100 flex items-center justify-center rounded-t-lg relative overflow-hidden">
                   <img
-                    src={`https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-                      recipe.title + " food dish professional photography"
-                    )}&image_size=landscape_4_3`}
+                    src={
+                      recipe.image_url ||
+                      `https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
+                        recipe.title + " food dish professional photography"
+                      )}&image_size=landscape_4_3`
+                    }
                     alt={recipe.title}
                     className="w-full h-full object-cover"
                     loading="lazy"

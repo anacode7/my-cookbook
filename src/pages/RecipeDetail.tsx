@@ -461,7 +461,7 @@ export function RecipeDetail() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border">
         <div className="h-64 bg-gray-100 relative">
           <img
-            src={`https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
+            src={recipe.image_url || `https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
               recipe.title + " food dish professional photography"
             )}&image_size=landscape_16_9`}
             alt={recipe.title}
