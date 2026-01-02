@@ -102,6 +102,8 @@ export function RecipeLibrary() {
       );
     })
     .sort((a, b) => {
+        // Force sort by created_at desc to match default expectation
+        // But also respect user sort.
       if (sortOrder === "newest")
         return (
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

@@ -584,31 +584,25 @@ export function RecipeDetail() {
                     key={ing.id}
                     className="text-sm flex justify-between border-b border-gray-100 pb-2 last:border-0"
                   >
-                    <span>{ing.name}</span>
+                    <span>
+                      {scaledAmount > 0 && (
+                        <span className="font-semibold text-gray-600 mr-1">
+                          {scaledAmount.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          {ing.unit}
+                        </span>
+                      )}
+                      {ing.name}
+                    </span>
                     <div className="text-right">
-                      {/* Always show original (Imperial) */}
-                      {/* If user wants ONLY metric, we could swap. But request says: */}
-                      {/* "You can still keep the imperial with the ingredient list in the column on the right, I just want metric there, I don't want imperial." */}
-                      {/* Wait, "I just want metric there, I don't want imperial" implies REPLACING it? */}
-                      {/* "I want imperial on the left with the ingredients." -> There is no "left" column for amounts. */}
-                      {/* Layout is: Left=Name, Right=Amount. */}
-                      {/* So: Left=Name (Imperial?), Right=Metric Amount? */}
-                      {/* "I want imperial on the left with the ingredients" -> Maybe "2.75 oz Butter"? */}
-                      {/* BUT currently layout is: Name (left), Amount (right). */}
-                      {/* Let's show METRIC in the right column if it's convertible. */}
-
                       {isMetric ? (
                         <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
                           {formatMetricAmount(metric.amount, metric.unit)}
                         </span>
                       ) : (
-                        <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
-                          {scaledAmount > 0
-                            ? scaledAmount.toLocaleString(undefined, {
-                                maximumFractionDigits: 2,
-                              })
-                            : ""}{" "}
-                          {ing.unit}
+                        <span className="font-medium text-gray-400 whitespace-nowrap ml-2 italic">
+                          -
                         </span>
                       )}
                     </div>
