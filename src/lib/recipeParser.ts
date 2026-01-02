@@ -170,24 +170,24 @@ function parseSingleRecipe(text: string): ParsedRecipe {
       // Let's try a more robust approach:
       // 1. Check if line starts with number/fraction
       // Improved regex to capture "fl oz" or two-word units
-      const startMatch = clean.match(
-        /^([\d\s./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+(?:\s+[a-zA-Z.]+)?)\s+(.*)/
+      // [Number] [Unit-Candidate] [Name]
+      const fullMatch = clean.match(
+        /^([\d\s./?¼½¾⅓⅔⅛]+)\s+([a-zA-Z.]+(?:\s+[a-zA-Z.]+)?)\s+(.*)/
       );
 
-      // 2. Check if line ends with number/fraction (e.g. "Cauliflower 1")
+      // 2. Check if line starts with number but NO unit (e.g. "1 Cauliflower" or "1 Cup")
+      const startNumberMatch = clean.match(/^([\d\s./?¼½¾⅓⅔⅛]+)\s+(.*)$/);
+
+      // 3. Check if line ends with number/fraction (e.g. "Cauliflower 1")
       const endMatch = clean.match(
         /^(.*)\s+([\d./?¼½¾⅓⅔⅛]+)\s*([a-zA-Z.]+(?:\s+[a-zA-Z.]+)?)$/
       );
 
-      if (startMatch) {
+      if (fullMatch) {
         // Case: "2¾ oz Salted Butter" or "14 fl oz Whole Milk"
-        let amountStr = startMatch[1].trim();
-        let unitStr = startMatch[2] || "";
-        let nameStr = startMatch[3];
-
-        // Refine Unit/Name split:
-        // Regex `[a-zA-Z.]+(?:\s+[a-zA-Z.]+)?` greedily grabs "oz Whole".
-        // We need to check if unitStr contains common unit words.
+        let amountStr = fullMatch[1].trim();
+        let unitStr = fullMatch[2] || "";
+        let nameStr = fullMatch[3];
 
         const knownUnits = [
           "fl oz",
@@ -252,18 +252,6 @@ function parseSingleRecipe(text: string): ParsedRecipe {
           }
           unitStr = bestUnit;
           nameStr = bestName;
-        } else if (unitStr) {
-          // Single word unit caught.
-          // If unit is NOT in known list, check if it should be part of name?
-          // E.g. "1 Whole Chicken" -> regex sees Unit="Whole", Name="Chicken"
-          const u = unitStr.toLowerCase().replace(".", "").replace(/s$/, "");
-          if (!knownUnits.includes(u)) {
-            // Maybe it's just a name? "1 Whole Chicken"
-            // But keep it as unit if it looks like a container/unit (e.g. "bunch", "clove")?
-            // For now, if not strict known unit, append to name?
-            // RISK: "1 pinch Salt" -> pinch is not in knownUnits -> Name="pinch Salt"
-            // Better to be loose for now.
-          }
         }
 
         // Convert fractions
@@ -297,6 +285,68 @@ function parseSingleRecipe(text: string): ParsedRecipe {
           unit: unitStr,
           order_index: recipe.ingredients.length,
         });
+      } else if (startNumberMatch) {
+        // Case: "1 Cauliflower" or "1 Cup" or "1/4 Nutmeg"
+        let amountStr = startNumberMatch[1].trim();
+        let text = startNumberMatch[2].trim();
+
+        const knownUnits = [
+          "fl oz",
+          "floz",
+          "fl.oz",
+          "oz",
+          "lb",
+          "lbs",
+          "cup",
+          "cups",
+          "tbsp",
+          "tsp",
+          "g",
+          "kg",
+          "ml",
+          "l",
+          "liter",
+          "pint",
+          "quart",
+          "gal",
+        ];
+
+        let unitStr = "";
+        let nameStr = text;
+
+        const firstWord = text.split(" ")[0];
+        const normalizedFirst = firstWord.toLowerCase().replace(".", "");
+        const isKnownUnit =
+          knownUnits.includes(normalizedFirst) ||
+          knownUnits.includes(normalizedFirst.replace(/s$/, ""));
+
+        if (isKnownUnit) {
+          unitStr = firstWord;
+          nameStr = text.substring(firstWord.length).trim();
+        } else if (text.toLowerCase().startsWith("fl oz")) {
+          unitStr = "fl oz";
+          nameStr = text.substring(5).trim();
+        }
+
+        amountStr = amountStr
+          .replace(/¼/g, ".25")
+          .replace(/½/g, ".5")
+          .replace(/¾/g, ".75")
+          .replace(/⅓/g, ".33")
+          .replace(/⅔/g, ".66")
+          .replace(/⅛/g, ".125")
+          .replace(/\?/g, ".5");
+        let amountVal = parseFloat(amountStr) || 0;
+
+        recipe.ingredients?.push({
+          id: crypto.randomUUID(),
+          recipe_id: "",
+          name: nameStr.trim(),
+          amount: amountVal,
+          unit: unitStr,
+          order_index: recipe.ingredients.length,
+        });
+      } else if (endMatch) {
       } else if (endMatch) {
         // Case: "Cauliflower 1" or "Nutmeg 0.25"
         let nameStr = endMatch[1];
