@@ -278,10 +278,19 @@ export function RecipeLibrary() {
                       alt={recipe.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.parentElement
+                          ?.querySelector(".fallback-icon")
+                          ?.classList.remove("hidden");
+                      }}
                     />
-                  ) : (
-                    <ChefHat className="h-12 w-12 text-orange-300" />
-                  )}
+                  ) : null}
+                  <ChefHat
+                    className={`h-12 w-12 text-orange-300 fallback-icon ${
+                      recipe.image_url ? "hidden" : ""
+                    }`}
+                  />
                   {recipe.cooked && (
                     <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                       Cooked

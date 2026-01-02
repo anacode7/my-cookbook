@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useShoppingList } from "@/context/ShoppingListContext";
 import { cn } from "@/lib/utils";
+import { convertToMetric, formatMetricAmount } from "@/lib/conversions";
 
 export function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -466,14 +467,23 @@ export function RecipeDetail() {
               src={recipe.image_url}
               alt={recipe.title}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                e.currentTarget.parentElement
+                  ?.querySelector(".fallback")
+                  ?.classList.remove("hidden");
+              }}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-gray-400 font-medium">
-                No Image Available
-              </span>
-            </div>
-          )}
+          ) : null}
+          <div
+            className={`w-full h-full flex items-center justify-center bg-gray-200 fallback ${
+              recipe.image_url ? "hidden" : ""
+            }`}
+          >
+            <span className="text-gray-400 font-medium">
+              No Image Available
+            </span>
+          </div>
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6 pt-12">
             <h1 className="text-3xl font-bold text-white">{recipe.title}</h1>
             <div className="flex items-center gap-4 mt-2 text-white/90">
@@ -564,20 +574,47 @@ export function RecipeDetail() {
               </div>
             </div>
             <ul className="space-y-3">
-              {ingredients.map((ing) => (
-                <li
-                  key={ing.id}
-                  className="text-sm flex justify-between border-b border-gray-100 pb-2 last:border-0"
-                >
-                  <span>{ing.name}</span>
-                  <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
-                    {(ing.amount * scaleFactor).toLocaleString(undefined, {
-                      maximumFractionDigits: 2,
-                    })}{" "}
-                    {ing.unit}
-                  </span>
-                </li>
-              ))}
+              {ingredients.map((ing) => {
+                const scaledAmount = ing.amount * scaleFactor;
+                const metric = convertToMetric(scaledAmount, ing.unit);
+                const isMetric = ing.unit !== metric.unit;
+
+                return (
+                  <li
+                    key={ing.id}
+                    className="text-sm flex justify-between border-b border-gray-100 pb-2 last:border-0"
+                  >
+                    <span>{ing.name}</span>
+                    <div className="text-right">
+                      {/* Always show original (Imperial) */}
+                      {/* If user wants ONLY metric, we could swap. But request says: */}
+                      {/* "You can still keep the imperial with the ingredient list in the column on the right, I just want metric there, I don't want imperial." */}
+                      {/* Wait, "I just want metric there, I don't want imperial" implies REPLACING it? */}
+                      {/* "I want imperial on the left with the ingredients." -> There is no "left" column for amounts. */}
+                      {/* Layout is: Left=Name, Right=Amount. */}
+                      {/* So: Left=Name (Imperial?), Right=Metric Amount? */}
+                      {/* "I want imperial on the left with the ingredients" -> Maybe "2.75 oz Butter"? */}
+                      {/* BUT currently layout is: Name (left), Amount (right). */}
+                      {/* Let's show METRIC in the right column if it's convertible. */}
+
+                      {isMetric ? (
+                        <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
+                          {formatMetricAmount(metric.amount, metric.unit)}
+                        </span>
+                      ) : (
+                        <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
+                          {scaledAmount > 0
+                            ? scaledAmount.toLocaleString(undefined, {
+                                maximumFractionDigits: 2,
+                              })
+                            : ""}{" "}
+                          {ing.unit}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
             <div className="mt-4 pt-4 border-t text-xs text-gray-400 text-center">
               Original servings: {recipe.servings}

@@ -131,7 +131,9 @@ function parseSingleRecipe(text: string): ParsedRecipe {
           .trim();
         recipe.cooking_time = timeVal;
       } else if (line.match(/^(Image|Photo):/i)) {
-        const url = line.replace(/^(Image:|Photo:)\s*/i, "").trim();
+        let url = line.replace(/^(Image:|Photo:)\s*/i, "").trim();
+        // Remove backticks and quotes if user pasted markdown code
+        url = url.replace(/[`'"]/g, "");
         recipe.image_url = url;
       } else if (line.startsWith("http://") || line.startsWith("https://")) {
         // Assume bare URL is an image if we don't have one yet
@@ -346,7 +348,6 @@ function parseSingleRecipe(text: string): ParsedRecipe {
           unit: unitStr,
           order_index: recipe.ingredients.length,
         });
-      } else if (endMatch) {
       } else if (endMatch) {
         // Case: "Cauliflower 1" or "Nutmeg 0.25"
         let nameStr = endMatch[1];
