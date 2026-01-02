@@ -123,8 +123,8 @@ function parseSingleRecipe(text: string): ParsedRecipe {
         const timeVal = line
           .replace(/^(Time:|Cooking Time:|###\s*Cooking Time:)\s*/i, "")
           .trim();
-        recipe.notes += `Cooking Time: ${timeVal}\n`;
-      } else if (line.startsWith("Image:") || line.startsWith("Photo:")) {
+        recipe.cooking_time = timeVal;
+      } else if (line.match(/^(Image|Photo):/i)) {
         const url = line.replace(/^(Image:|Photo:)\s*/i, "").trim();
         recipe.image_url = url;
       } else if (

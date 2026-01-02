@@ -11,6 +11,7 @@ import {
   Save,
   X,
   Plus,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Recipe, Ingredient, CookingStep, Category } from "@/types";
@@ -461,9 +462,12 @@ export function RecipeDetail() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border">
         <div className="h-64 bg-gray-100 relative">
           <img
-            src={recipe.image_url || `https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-              recipe.title + " food dish professional photography"
-            )}&image_size=landscape_16_9`}
+            src={
+              recipe.image_url ||
+              `https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
+                recipe.title + " food dish professional photography"
+              )}&image_size=landscape_16_9`
+            }
             alt={recipe.title}
             className="w-full h-full object-cover"
           />
@@ -473,6 +477,12 @@ export function RecipeDetail() {
               <span className="capitalize bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm text-sm">
                 {recipe.category}
               </span>
+              {recipe.cooking_time && (
+                <div className="flex items-center gap-1 text-sm bg-black/30 px-2 py-0.5 rounded backdrop-blur-sm">
+                  <Clock className="h-3 w-3" />
+                  <span>{recipe.cooking_time}</span>
+                </div>
+              )}
               <div className="flex items-center">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star

@@ -295,28 +295,36 @@ export function RecipeLibrary() {
                       {recipe.title}
                     </CardTitle>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span
-                      className={cn(
-                        "text-xs px-2 py-0.5 rounded-full capitalize",
-                        recipe.category === "main" &&
-                          "bg-blue-100 text-blue-700",
-                        recipe.category === "soup" &&
-                          "bg-amber-100 text-amber-700",
-                        recipe.category === "side" &&
-                          "bg-green-100 text-green-700",
-                        recipe.category === "dessert" &&
-                          "bg-pink-100 text-pink-700"
-                      )}
-                    >
-                      {recipe.category}
-                    </span>
-                    <div className="flex items-center text-yellow-500">
-                      <Star className="h-3 w-3 fill-current" />
-                      <span className="text-xs ml-1 font-medium">
-                        {recipe.rating || "-"}
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "text-xs px-2 py-0.5 rounded-full capitalize",
+                          recipe.category === "main" &&
+                            "bg-blue-100 text-blue-700",
+                          recipe.category === "soup" &&
+                            "bg-amber-100 text-amber-700",
+                          recipe.category === "side" &&
+                            "bg-green-100 text-green-700",
+                          recipe.category === "dessert" &&
+                            "bg-pink-100 text-pink-700"
+                        )}
+                      >
+                        {recipe.category}
                       </span>
+                      <div className="flex items-center text-yellow-500">
+                        <Star className="h-3 w-3 fill-current" />
+                        <span className="text-xs ml-1 font-medium">
+                          {recipe.rating || "-"}
+                        </span>
+                      </div>
                     </div>
+                    {recipe.cooking_time && (
+                      <div className="flex items-center text-gray-500 text-xs">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {recipe.cooking_time}
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1">
