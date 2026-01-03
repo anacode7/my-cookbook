@@ -136,11 +136,30 @@ function parseSingleRecipe(text: string): ParsedRecipe {
         url = url.replace(/[`'"]/g, "");
         // Remove surrounding parens if present (e.g. from markdown link)
         url = url.replace(/^\((.*)\)$/, "$1");
+
+        // Fix: If user pasted a Mob Recipe Page URL (e.g. video hero), use a screenshot service
+        if (
+          url.match(/mob\.co\.uk\/recipes\//) &&
+          !url.match(/\.(jpg|jpeg|png|webp|gif)$/i)
+        ) {
+          url = `https://image.thum.io/get/width/1200/crop/800/noanimate/${url}`;
+        }
+
         recipe.image_url = url;
       } else if (line.startsWith("http://") || line.startsWith("https://")) {
         // Assume bare URL is an image if we don't have one yet
         if (!recipe.image_url) {
-          recipe.image_url = line.trim();
+          let url = line.trim();
+
+          // Fix: If user pasted a Mob Recipe Page URL (e.g. video hero), use a screenshot service
+          if (
+            url.match(/mob\.co\.uk\/recipes\//) &&
+            !url.match(/\.(jpg|jpeg|png|webp|gif)$/i)
+          ) {
+            url = `https://image.thum.io/get/width/1200/crop/800/noanimate/${url}`;
+          }
+
+          recipe.image_url = url;
         }
       } else if (
         !recipe.title &&
