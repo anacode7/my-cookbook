@@ -269,14 +269,34 @@ export function RecipeLibrary() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRecipes.map((recipe) => (
+          {filteredRecipes.map((recipe) => {
+            // HACK: Extract Image and Time from notes if missing (DB Schema Fix)
+            let displayImage = recipe.image_url;
+            let displayTime = recipe.cooking_time;
+            let displayNotes = recipe.notes || "";
+
+            if (!displayImage || !displayTime) {
+                const imgMatch = displayNotes.match(/\[IMAGE_URL: (.*?)\]/);
+                if (imgMatch) {
+                    displayImage = imgMatch[1];
+                    displayNotes = displayNotes.replace(imgMatch[0], "").trim();
+                }
+                const timeMatch = displayNotes.match(/\[COOKING_TIME: (.*?)\]/);
+                if (timeMatch) {
+                    displayTime = timeMatch[1];
+                    displayNotes = displayNotes.replace(timeMatch[0], "").trim();
+                }
+            }
+            const cleanImage = displayImage?.replace(/[`'"]/g, "").trim();
+
+            return (
             <Link key={recipe.id} to={`/recipe/${recipe.id}`}>
               <Card className="h-full hover:shadow-md transition-shadow cursor-pointer flex flex-col">
                 {/* Placeholder Image */}
                 <div className="h-48 bg-orange-100 flex items-center justify-center rounded-t-lg relative overflow-hidden">
-                  {recipe.image_url ? (
+                  {cleanImage ? (
                     <img
-                      src={recipe.image_url}
+                      src={cleanImage}
                       alt={recipe.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -290,7 +310,7 @@ export function RecipeLibrary() {
                   ) : null}
                   <ChefHat
                     className={`h-12 w-12 text-orange-300 fallback-icon ${
-                      recipe.image_url ? "hidden" : ""
+                      cleanImage ? "hidden" : ""
                     }`}
                   />
                   {recipe.cooked && (
@@ -329,17 +349,17 @@ export function RecipeLibrary() {
                         </span>
                       </div>
                     </div>
-                    {recipe.cooking_time && (
+                    {displayTime && (
                       <div className="flex items-center text-gray-500 text-xs">
                         <Clock className="h-3 w-3 mr-1" />
-                        {recipe.cooking_time}
+                        {displayTime}
                       </div>
                     )}
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1">
                   <p className="text-sm text-gray-500 line-clamp-3">
-                    {recipe.notes || "No notes available."}
+                    {displayNotes || "No notes available."}
                   </p>
                 </CardContent>
                 <CardFooter className="text-xs text-gray-400 border-t pt-4 mt-auto">
@@ -350,7 +370,8 @@ export function RecipeLibrary() {
                 </CardFooter>
               </Card>
             </Link>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>

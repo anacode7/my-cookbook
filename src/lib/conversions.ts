@@ -41,6 +41,29 @@ export function convertToMetric(
     return { amount: amount * 1000, unit: "ml" };
 
   // Unknown or count (e.g. "whole", "pinch")
+  
+  // Try to parse complex units like "x 400g cans" or "400g"
+  // Regex to find "400g" or "400ml" inside the unit string
+  // Matches: "x 400g", "400g", "(400g)"
+  const weightMatch = u.match(/(?:x\s*|^\s*|\(\s*)(\d+(?:\.\d+)?)\s*g\b/);
+  if (weightMatch) {
+      const weightPerItem = parseFloat(weightMatch[1]);
+      return { amount: amount * weightPerItem, unit: "g" };
+  }
+
+  const volMatch = u.match(/(?:x\s*|^\s*|\(\s*)(\d+(?:\.\d+)?)\s*ml\b/);
+  if (volMatch) {
+      const volPerItem = parseFloat(volMatch[1]);
+      return { amount: amount * volPerItem, unit: "ml" };
+  }
+
+  // Handle "kg" inside unit? e.g. "x 1kg bags"
+  const kgMatch = u.match(/(?:x\s*|^\s*|\(\s*)(\d+(?:\.\d+)?)\s*kg\b/);
+  if (kgMatch) {
+      const weightPerItem = parseFloat(kgMatch[1]) * 1000;
+      return { amount: amount * weightPerItem, unit: "g" };
+  }
+
   return { amount, unit: unit };
 }
 
@@ -55,6 +78,12 @@ export function formatMetricAmount(amount: number, unit: string): string {
       maximumFractionDigits: 2,
     })} L`;
   }
-  // Round to reasonable decimals
+  
+  // Rounding Logic
+  // If amount >= 10, round to integer (e.g. 155 ml, 28 g)
+  // If amount < 10, keep 1 decimal (e.g. 5.5 ml)
+  if (amount >= 10) {
+      return `${Math.round(amount)} ${unit}`;
+  }
   return `${parseFloat(amount.toFixed(1))} ${unit}`;
 }
