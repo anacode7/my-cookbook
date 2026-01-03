@@ -613,7 +613,9 @@ export function RecipeDetail() {
               {ingredients.map((ing) => {
                 const scaledAmount = ing.amount * scaleFactor;
                 const metric = convertToMetric(scaledAmount, ing.unit);
-                const isMetric = ing.unit !== metric.unit;
+                // Always show the "metric" column value if amount > 0,
+                // even if it's the same unit (e.g. "1 Onion" or "500g").
+                const showMetric = metric.amount > 0;
 
                 return (
                   <li
@@ -630,9 +632,9 @@ export function RecipeDetail() {
                       {ing.name}
                     </span>
 
-                    {/* Right Column: Metric Only */}
+                    {/* Right Column: Metric / Standardized */}
                     <div className="text-right">
-                      {isMetric ? (
+                      {showMetric ? (
                         <span className="font-medium text-gray-700 whitespace-nowrap ml-2">
                           {formatMetricAmount(metric.amount, metric.unit)}
                         </span>
