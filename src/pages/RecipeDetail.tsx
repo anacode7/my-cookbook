@@ -50,7 +50,26 @@ export function RecipeDetail() {
 
   // Check if image URL is valid (basic check)
   // Ensure we trim whitespace and backticks if they somehow persist, although parser should handle it.
-  const cleanImage = recipe?.image_url?.replace(/[`'"]/g, "").trim();
+
+  // HACK: Extract from notes if missing in direct props
+  let displayImage = recipe?.image_url;
+  let displayTime = recipe?.cooking_time;
+  let displayNotes = recipe?.notes || "";
+
+  if (!displayImage || !displayTime) {
+    const imgMatch = displayNotes.match(/\[IMAGE_URL: (.*?)\]/);
+    if (imgMatch) {
+      displayImage = imgMatch[1];
+      displayNotes = displayNotes.replace(imgMatch[0], "").trim();
+    }
+    const timeMatch = displayNotes.match(/\[COOKING_TIME: (.*?)\]/);
+    if (timeMatch) {
+      displayTime = timeMatch[1];
+      displayNotes = displayNotes.replace(timeMatch[0], "").trim();
+    }
+  }
+
+  const cleanImage = displayImage?.replace(/[`'"]/g, "").trim();
   const hasValidImage = cleanImage && cleanImage.startsWith("http");
 
   // ... (fetchData remains same, just ensure it resets Edit Form)
@@ -469,7 +488,7 @@ export function RecipeDetail() {
         <div className="h-64 bg-gray-100 relative group">
           {hasValidImage ? (
             <img
-              src={cleanImage}
+              src={displayImage}
               alt={recipe.title}
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -503,10 +522,10 @@ export function RecipeDetail() {
               </span>
 
               {/* Cooking Time Badge - Explicitly rendering if present */}
-              {recipe.cooking_time ? (
+              {displayTime ? (
                 <div className="flex items-center gap-1.5 text-sm bg-black/40 hover:bg-black/50 transition-colors px-3 py-1 rounded-full backdrop-blur-md border border-white/10 shadow-sm">
                   <Clock className="h-4 w-4 text-orange-400" />
-                  <span>{recipe.cooking_time}</span>
+                  <span>{displayTime}</span>
                 </div>
               ) : null}
 
@@ -655,7 +674,7 @@ export function RecipeDetail() {
             <div className="bg-amber-50 p-6 rounded-lg border border-amber-100">
               <h3 className="font-bold text-lg text-amber-800 mb-2">Notes</h3>
               <p className="text-amber-900/80 whitespace-pre-wrap">
-                {recipe.notes}
+                {displayNotes}
               </p>
             </div>
           )}
